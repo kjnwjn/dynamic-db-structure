@@ -1,25 +1,23 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { loadEntityManager } from 'src/common/helpers/loadEntityManager.helper';
 import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
-import { User as UserMysql } from './entities/user.mysql.entity';
-import { UserPresenter } from './presenter/user.presenter';
 import { User as UserMongo } from './entities/user.mongo.entity';
+import { User as UserMysql } from './entities/user.mysql.entity';
 
 @Injectable()
-export class UserService {
+export class UserMysqlService {
   constructor(private moduleRef: ModuleRef) {}
 
-  async create(createUserDto: CreateUserDto) {
-    const entityManager = await loadEntityManager('MYSQL', this.moduleRef);
-    const entityManagerMongo = await loadEntityManager('MONGO', this.moduleRef);
+  async create(createUserDto: CreateUserDto, systemId) {
+    const entityManager = await loadEntityManager(systemId, this.moduleRef);
+    let user: any;
 
-    let user = await entityManager.getRepository(UserMysql).save(createUserDto);
-    let userMongo = await entityManagerMongo
-      .getMongoRepository(UserMongo)
-      .save(createUserDto);
-
-    console.log(user);
+    user = await entityManager.getRepository(UserMysql).save(createUserDto);
 
     if (!user) {
       return false;
@@ -27,15 +25,19 @@ export class UserService {
     return true;
   }
   async findAll(systemId: string): Promise<UserMysql[]> {
-    const entityManager = await loadEntityManager(systemId, this.moduleRef);
-    const entityManagerMongo = await loadEntityManager('MONGO', this.moduleRef);
-    console.log(await entityManagerMongo.getMongoRepository(UserMongo).find());
+    let listUser: any = [];
 
+    const entityManager = await loadEntityManager(systemId, this.moduleRef);
     if (!entityManager) {
-      return [];
+      throw new InternalServerErrorException();
+    }
+    listUser = await entityManager.getRepository(UserMysql).find();
+
+    if (!listUser.length) {
+      throw new NotFoundException();
     }
 
-    return entityManager.find(UserMysql);
+    return listUser;
   }
 
   async findOne(id: number): Promise<UserMongo> {

@@ -9,13 +9,11 @@ export class UserPresenter {
   avatarPath: string;
   createdAt: String;
   updatedAt: String;
-  // roles: RolePresenter[];
   constructor(user: User) {
     this.id = user.id;
     this.firstName = user.firstName;
     this.lastName = user.lastName;
     this.email = user.email;
     this.avatarPath = user.avatarPath;
-    // this.roles = user.roles;
   }
 }

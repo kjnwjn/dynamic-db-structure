@@ -9,13 +9,13 @@ export class User {
   // @Column()
   // value: string;
 
-  @Column({ length: 500, name: 'first_name' })
+  @Column()
   firstName: string;
 
-  @Column({ length: 500, name: 'last_name' })
+  @Column()
   lastName: string;
 
-  @Column({ length: 500, nullable: true })
+  @Column()
   email: string;
 
   @Column({ name: 'avatar_path', nullable: true })

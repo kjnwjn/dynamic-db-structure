@@ -1,75 +1,29 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  ParseIntPipe,
-  Patch,
-  Post,
-} from '@nestjs/common';
-import { Roles } from 'src/common/decorators/role.decorator';
-import { UserType } from 'src/common/enums/userType.enum';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { ExceptionsService } from 'src/common/exceptions/exceptions.service';
-import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
-import { UserPresenter } from './presenter/user.presenter';
-import { UserService } from './user.service';
+import { CreateUserDto } from './dto/user.dto';
+import { UserMongoService } from './user.mongo.service';
+import { UserMysqlService } from './user.mysql.service';
+import { getDatabaseSystemIds } from 'src/infrastructure/config/orm.config';
 @Controller('user')
 export class UserController {
   constructor(
-    private readonly userService: UserService,
+    private readonly userMySqlService: UserMysqlService,
+    private readonly userMongoService: UserMongoService,
     private readonly exceptionService: ExceptionsService,
   ) {}
 
-  @Post()
-  async create(@Body() createUserDto: CreateUserDto) {
-    try {
-      const data = await this.userService.create(createUserDto);
-      return data;
-    } catch (error) {
-      console.log(error);
-
-      throw this.exceptionService.internalServerErrorException({
-        message: 'Internal server error',
-      });
-    }
-  }
-
-  // @UseGuards(AuthenGuard)
-  @Get()
-  async findAll() {
-    try {
-      const data = await this.userService.findAll('MYSQL');
-
-      return data;
-    } catch (error) {
-      console.log(error);
-      throw this.exceptionService.internalServerErrorException({
-        message: 'Internal server error',
-      });
-    }
-  }
-
-  @Roles(UserType.ADMIN, UserType.EMPLOYEE)
-  @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number) {
-    try {
-      const data = await this.userService.findOne(+id);
-      return data;
-    } catch (error) {
-      throw this.exceptionService.internalServerErrorException({
-        message: 'Internal server error',
-      });
-    }
-  }
-
-  @Patch(':id')
-  update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() updateUserDto: UpdateUserDto,
+  @Post(':systemId')
+  async create(
+    @Body() createUserDto: CreateUserDto,
+    @Param('systemId') systemId: string,
   ) {
     try {
-      return this.userService.update(+id, updateUserDto);
+      let service = this.getService(systemId);
+      const data = await this[service].create(
+        createUserDto,
+        systemId.toUpperCase(),
+      );
+      return data;
     } catch (error) {
       throw this.exceptionService.internalServerErrorException({
         message: 'Internal server error',
@@ -77,16 +31,26 @@ export class UserController {
     }
   }
 
-  @Delete(':id')
-  async remove(@Param('id') id: string) {
+  @Get(':systemId')
+  async findAll(@Param('systemId') systemId: string) {
     try {
-      const data = await this.userService.remove(+id);
+      let service = this.getService(systemId);
 
-      return `delete user ${id} success`;
+      const data = await this[service].findAll(systemId.toUpperCase());
+      return data;
     } catch (error) {
       throw this.exceptionService.internalServerErrorException({
         message: 'Internal server error',
       });
     }
+  }
+  getService(systemId: string) {
+    let a = Object.keys(this).filter((item) => {
+      if (item.toUpperCase().match(systemId.toUpperCase())) {
+        return item;
+      }
+    });
+
+    return a.length ? a[0] : null;
   }
 }
