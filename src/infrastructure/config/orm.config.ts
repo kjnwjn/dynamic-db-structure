@@ -1,8 +1,4 @@
 import { registerAs } from '@nestjs/config';
-import * as dotenv from 'dotenv';
-
-dotenv.config(); // used to get process.env access prior to AppModule instanciation
-
 export const getDatabaseSystemIds = (): string[] => {
   return process.env.DATABASE_SYSTEM_IDS.split(',');
 };
@@ -25,9 +21,9 @@ export default registerAs('orm', () => {
           process.env[`DB_${systemId}_ENTITIES`]
         }.entity.{ts,js}`,
       ],
-      // entities: systemId == 'MYSQL' ? [User, Role] : [Product],
     };
   });
+  // console.log(config);
 
   return config;
 });

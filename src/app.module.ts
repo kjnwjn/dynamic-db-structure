@@ -1,23 +1,14 @@
 import { ClassSerializerInterceptor, Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { EnvironmentConfigModule } from './common/config/env/env.config.module';
 import { DatabaseModule } from './infrastructure/database/database.module';
-import { UserModule } from './modules/user/user.module';
-import ormConfig from './infrastructure/config/orm.config';
 import { ProductModule } from './modules/product/product.module';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { UserModule } from './modules/user/user.module';
 
 @Module({
-  imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: [ormConfig],
-    }),
-    UserModule,
-    DatabaseModule,
-    ProductModule,
-  ],
+  imports: [EnvironmentConfigModule, UserModule, DatabaseModule, ProductModule],
   controllers: [AppController],
   providers: [
     AppService,
